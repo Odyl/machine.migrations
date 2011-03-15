@@ -3,6 +3,8 @@ bin
 _ReSharper.*
 *.csproj.user
 *.resharper.user
+*.ReSharper.user
+*.TeamCity.user
 *.resharper
 *.suo
 *.cache
