@@ -72,6 +72,7 @@ namespace Machine.Migrations.Services.Impl
       foreach (string alias in migrationReference.Aliases)
       {
         Type migrationType = assembly.GetType(alias);
+          var lol = assembly.GetTypes();
         if (migrationType != null)
         {
           return migrationType;
