@@ -4,6 +4,7 @@ using System.Linq;
 using log4net.Appender;
 using Machine.Migrations.DatabaseProviders;
 using Machine.Migrations.MySql;
+using Machine.Migrations.PostgreSQL;
 using Machine.Migrations.SchemaProviders;
 using Machine.Migrations.Services;
 using Machine.Migrations.Services.Impl;
@@ -72,6 +73,11 @@ namespace Machine.Migrations.ConsoleRunner
       {
         this.ConnectionProviderType = typeof(MySqlConnectionProvider);
         this.SchemaProviderType = typeof(MySqlSchemaProvider);
+      }
+      else if (!string.IsNullOrEmpty(options.DatabaseType) && options.DatabaseType == "pgsql")
+      {
+          this.ConnectionProviderType = typeof (PostgreSQLConnectionProvider);
+          this.SchemaProviderType = typeof (PostgreSQLSchemaProvider);
       }
       else
       {

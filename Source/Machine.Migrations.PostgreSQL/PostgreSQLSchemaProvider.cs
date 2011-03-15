@@ -64,7 +64,7 @@ namespace Machine.Migrations.PostgreSQL
         {
             using (Machine.Core.LoggingUtilities.Log4NetNdc.Push("HasTable({0})", table))
             {
-                return _databaseProvider.ExecuteScalar<Int32>("select count(*) from information_schema.tables where table_name = '{0}'", table) > 0;
+                return _databaseProvider.ExecuteScalar<Int32>("select count(*)::int from information_schema.tables where table_name = '{0}'", table) > 0;
             }
         }
 
@@ -117,7 +117,7 @@ namespace Machine.Migrations.PostgreSQL
         {
             using (Machine.Core.LoggingUtilities.Log4NetNdc.Push("HasSchema({0})", schemaName))
             {
-                return _databaseProvider.ExecuteScalar<Int32>("select count(*) from information_schema.schemata where table_schema = '{0}'", schemaName) > 0;
+                return _databaseProvider.ExecuteScalar<Int32>("select count(*)::int from information_schema.schemata where table_schema = '{0}'", schemaName) > 0;
             }
         }
 
@@ -125,7 +125,7 @@ namespace Machine.Migrations.PostgreSQL
         {
             using (Machine.Core.LoggingUtilities.Log4NetNdc.Push("HasColumn({0}.{1})", table, column))
             {
-                return _databaseProvider.ExecuteScalar<Int32>("select count(*) from information_schema.columns where table_name = '{0}' and column_name = '{1}'", table, column) > 0;
+                return _databaseProvider.ExecuteScalar<Int32>("select count(*)::int from information_schema.columns where table_name = '{0}' and column_name = '{1}'", table, column) > 0;
             }
         }
 
@@ -133,7 +133,7 @@ namespace Machine.Migrations.PostgreSQL
         {
             using (Machine.Core.LoggingUtilities.Log4NetNdc.Push("IsColumnOfType({0}.{1}.{2})", table, column, type))
             {
-                return _databaseProvider.ExecuteScalar<Int32>("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{0}' AND COLUMN_NAME = '{1}' AND DATA_TYPE = '{2}'", table, column, type) > 0;
+                return _databaseProvider.ExecuteScalar<Int32>("SELECT COUNT(*)::int FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{0}' AND COLUMN_NAME = '{1}' AND DATA_TYPE = '{2}'", table, column, type) > 0;
             }
         }
 
@@ -199,33 +199,39 @@ namespace Machine.Migrations.PostgreSQL
 
         string ColumnToCreateTableSql(Column column)
         {
-            if(column.IsIdentity)
+            if (column.IsIdentity && (column.ColumnType == ColumnType.Int16 || column.ColumnType == ColumnType.Int32))
             {
-                throw new NotSupportedException("PostgreSQL does not have identity columns");
+                return String.Format("\"{0}\" {1} {2}",
+                                     Normalize(column.Name),
+                                     "serial",
+                                     column.AllowNull ? "" : "NOT NULL");
             }
+            else
+            {
 
-            return String.Format("\"{0}\" {1} {2}",
-                                 column.Name,
-                                 ToMsSqlType(column.ColumnType, column.Size),
-                                 column.AllowNull ? "" : "NOT NULL");
+                return String.Format("\"{0}\" {1} {2}",
+                                     Normalize(column.Name),
+                                     ToPgSQLType(column.ColumnType, column.Size),
+                                     column.AllowNull ? "" : "NOT NULL");
+            }
         }
 
         public virtual string ColumnToConstraintsSql(string tableName, Column column)
         {
             if (column.IsPrimaryKey)
             {
-                return String.Format("CONSTRAINT PK_{0}_{1} PRIMARY KEY (\"{1}\")", SchemaUtils.Normalize(tableName), SchemaUtils.Normalize(column.Name));
+                return String.Format("CONSTRAINT PK_{0}_{1} PRIMARY KEY (\"{1}\")", Normalize(tableName), Normalize(column.Name));
             }
 
             if (column.IsUnique)
             {
-                return String.Format("CONSTRAINT UK_{0}_{1} UNIQUE (\"{1}\" ASC)", SchemaUtils.Normalize(tableName), SchemaUtils.Normalize(column.Name));
+                return String.Format("CONSTRAINT UK_{0}_{1} UNIQUE (\"{1}\" ASC)", Normalize(tableName), Normalize(column.Name));
             }
 
             return null;
         }
 
-        public virtual string ToMsSqlType(ColumnType type, int size)
+        public virtual string ToPgSQLType(ColumnType type, int size)
         {
             switch (type)
             {
@@ -264,6 +270,15 @@ namespace Machine.Migrations.PostgreSQL
             }
 
             throw new ArgumentException("type");
+        }
+
+        private static string Normalize(string content)
+        {
+            return content.ToLower().
+              Replace(".", "_").
+              Replace("[", "").
+              Replace("]", "").
+              Replace("`", "");
         }
     }
 }
