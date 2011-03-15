@@ -34,6 +34,10 @@
     <Reference Include="log4net">
       <HintPath>..\..\Libraries\Logging\log4net.dll</HintPath>
     </Reference>
+    <Reference Include="Machine.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=5c474de7a495cff1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Libraries\Machine\Core\Machine.Core.dll</HintPath>
+    </Reference>
     <Reference Include="NHibernate">
       <HintPath>..\..\Libraries\NHibernate\NHibernate.dll</HintPath>
     </Reference>
